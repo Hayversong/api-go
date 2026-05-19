@@ -1,4 +1,4 @@
-# Todo API en Go
+# Todo API em Go
 
 Uma API REST simples e extremamente veloz para gerenciamento de listas de tarefas (Todo List), construída em Go utilizando apenas pacotes nativos da linguagem.
 
