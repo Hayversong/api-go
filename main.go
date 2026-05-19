@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 )
 
 // Tarefa representa a estrutura do dado que vamos trafegar na web.
@@ -18,16 +19,18 @@ type Tarefa struct {
 var tarefas []Tarefa
 
 func main() {
-	// Alimentando nossa lista com algumas tarefas iniciais para teste
-	tarefas = append(tarefas, Tarefa{ID: 1, Titulo: "Estudar ponteiros em Go", Concluida: true})
-	tarefas = append(tarefas, Tarefa{ID: 2, Titulo: "Criar minha primeira API", Concluida: false})
+	// 1. Tenta carregar o que já estava salvo no arquivo
+	carregarDados()
 
-	// Vinculamos a rota "/tarefas" a uma função que vai processar a requisição
+	// Se a lista estiver vazia (primeira vez rodando), podemos colocar uma tarefa padrão
+	if len(tarefas) == 0 {
+		tarefas = append(tarefas, Tarefa{ID: 1, Titulo: "Minha primeira tarefa persistente", Concluida: false})
+		salvarDados() // Já cria o arquivo pela primeira vez
+	}
+
 	http.HandleFunc("/tarefas", gerenciarTarefas)
 
 	fmt.Println("Servidor rodando na porta :8080...")
-	
-	// Liga o servidor na porta 8080. O 'nil' significa que usaremos o roteador padrão do Go.
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		fmt.Println("Erro ao iniciar o servidor:", err)
@@ -64,6 +67,8 @@ func gerenciarTarefas(w http.ResponseWriter, r *http.Request) {
 		// Adiciona a nova tarefa no nosso Slice global
 		tarefas = append(tarefas, novaTarefa)
 
+		salvarDados()
+
 		// Responde para o usuário com o status 201 (Created) e mostra a tarefa criada
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(novaTarefa)
@@ -71,5 +76,36 @@ func gerenciarTarefas(w http.ResponseWriter, r *http.Request) {
 	default:
 		// Se tentarem usar PUT, DELETE, etc., nós avisamos que não suportamos ainda
 		http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+	}
+}
+func salvarDados() {
+		// 1. Transforma o slice 'tarefas' completo em um texto JSON identado (bonito de ler)
+		// O segundo e terceiro parâmetros servem para formatar o espaçamento do arquivo
+		dadosJSON, err := json.MarshalIndent(tarefas, "", "  ")
+		if err != nil {
+			fmt.Println("❌ Erro ao converter tarefas para JSON:", err)
+			return
+		}
+
+		// 2. Grava os bytes no arquivo 'tarefas.json'.
+		// O número 0644 é a permissão padrão de leitura e escrita do Linux
+		err = os.WriteFile("tarefas.json", dadosJSON, 0644)
+		if err != nil {
+			fmt.Println("❌ Erro ao salvar o arquivo no disco:", err)
+		}
+}
+func carregarDados() {
+	// 1. Tenta ler o arquivo do disco
+	dados, err := os.ReadFile("tarefas.json")
+	if err != nil {
+		// Se o arquivo não existir (primeira vez rodando), apenas ignoramos o erro
+		fmt.Println("Nenhum arquivo 'tarefas.json' encontrado. Começando com lista padrão.")
+		return
+	}
+
+	// 2. Converte o texto JSON lido do arquivo de volta para o nosso slice global '&tarefas'
+	err = json.Unmarshal(dados, &tarefas) // Note o '&' porque estamos alterando o slice original!
+	if err != nil {
+		fmt.Println("❌ Erro ao decodificar o arquivo JSON:", err)
 	}
 }
