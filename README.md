@@ -1,6 +1,6 @@
 # Todo API em Go
 
-Uma API REST simples e extremamente veloz para gerenciamento de listas de tarefas (Todo List), construída em Go utilizando apenas pacotes nativos da linguagem.
+Uma API REST simples para gerenciamento de listas de tarefas (Todo List), construída em Go utilizando apenas pacotes nativos da linguagem.
 
 Este projeto foi desenvolvido como objeto de estudo para consolidar conceitos de desenvolvimento backend, manipulação de estruturas de dados dinâmicas na memória e protocolo HTTP.
 
